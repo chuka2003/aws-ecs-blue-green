@@ -171,10 +171,10 @@ fi
 
 log "Starting traffic shift from BLUE ($BLUE_TG_ARN) to GREEN ($GREEN_TG_ARN)..."
 
-# Optional sanity check: describe listener
-LISTENER_JSON=$(aws elbv2 describe-listeners \
+# Optional sanity check: describe listener (ensure it exists and is accessible)
+aws elbv2 describe-listeners \
   --region "$AWS_REGION" \
-  --listener-arns "$LISTENER_ARN")
+  --listener-arns "$LISTENER_ARN" >/dev/null
 
 log "Listener retrieved. Beginning weighted shifts..."
 
