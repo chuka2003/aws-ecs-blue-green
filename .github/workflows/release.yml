@@ -1,0 +1,44 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # semantic version tags, e.g. v1.0.0
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: vars
+        run: |
+          TAG="${GITHUB_REF##*/}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog snippet
+        id: changelog
+        run: |
+          TAG="${GITHUB_REF##*/}"
+          echo "Looking for changelog entry for $TAG"
+          # Super simple extract: grab the section that starts with "## [<tag>]"
+          # Adjust if your CHANGELOG format differs.
+          awk "/## \\[$TAG\\]/ {flag=1} /^## \\[/ && \$2 != \"[$TAG]\" && flag {exit} flag" CHANGELOG.md > RELEASE_NOTES.md || true
+          echo "notes<<EOF" >> "$GITHUB_OUTPUT"
+          cat RELEASE_NOTES.md >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: ${{ steps.vars.outputs.tag }}
+          body: ${{ steps.changelog.outputs.notes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

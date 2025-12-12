@@ -1,0 +1,75 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  validate:
+    name: Validate Action Structure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate action.yml syntax
+        run: |
+          echo "Validating action.yml..."
+          cat action.yml >/dev/null
+
+      - name: Validate deploy.sh syntax
+        run: |
+          echo "Checking bash syntax..."
+          bash -n scripts/deploy.sh
+
+      - name: Lint deploy.sh
+        uses: ludeeus/action-shellcheck@v2
+        with:
+          severity: warning
+
+  dry-run:
+    name: Dry Run Composite Action
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # We do not actually call AWS.
+      # Instead we fake the commands so the composite action can be invoked safely.
+      - name: Mock AWS CLI
+        run: |
+          mkdir -p ~/.local/bin
+          cat << 'EOF' > ~/.local/bin/aws
+          #!/usr/bin/env bash
+          echo "[MOCK AWS] $@"
+          if [[ "$@" == *"services-stable"* ]]; then
+            exit 0
+          fi
+          EOF
+          chmod +x ~/.local/bin/aws
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Mock jq
+        run: |
+          cat << 'EOF' > ~/.local/bin/jq
+          #!/usr/bin/env bash
+          echo "{}"
+          EOF
+          chmod +x ~/.local/bin/jq
+
+      - name: Run Action (Dry Run)
+        uses: ./
+        with:
+          aws-region: "us-east-1"
+          aws-role-to-assume: "arn:aws:iam::123456789012:role/mock"
+          cluster: "mock-cluster"
+          service: "mock-service"
+          listener-arn: "mock-listener"
+          blue-target-group-arn: "mock-blue-tg"
+          green-target-group-arn: "mock-green-tg"
+          shift-steps: 1
+          shift-interval-seconds: 1

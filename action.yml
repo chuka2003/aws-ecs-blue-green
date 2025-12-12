@@ -1,0 +1,83 @@
+name: 'ecs-blue-green-deploy'
+description: 'Blue-Green deployment to AWS ECS behind an ALB'
+author: 'Pascal Okoro'
+
+branding:
+  color: 'blue'
+  icon: 'cloud'
+
+inputs:
+  aws-region:
+    required: true
+    description: 'AWS region'
+
+  aws-role-to-assume:
+    required: true
+    description: 'ARN of the IAM role to assume for deployment'
+
+  cluster:
+    required: true
+    description: 'ECS cluster name'
+
+  service:
+    required: true
+    description: 'ECS service name'
+
+  image:
+    required: false
+    description: 'Container image URI to deploy (overrides task def container image)'
+
+  container-name:
+    required: false
+    description: 'Name of the container in the task definition to update'
+
+  listener-arn:
+    required: true
+    description: 'ALB listener ARN whose default rule will be updated to the new target group'
+
+  blue-target-group-arn:
+    required: true
+    description: 'Target group ARN for the BLUE environment (current live traffic)'
+
+  green-target-group-arn:
+    required: true
+    description: 'Target group ARN for the GREEN environment (new deployment)'
+
+  shift-steps:
+    required: false
+    default: '10'
+    description: 'Number of traffic shift steps'
+
+  shift-interval-seconds:
+    required: false
+    default: '15'
+    description: 'Seconds between shift steps'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-region: ${{ inputs.aws-region }}
+        role-to-assume: ${{ inputs.aws-role-to-assume }}
+
+    - name: Run deploy script
+      shell: bash
+      env:
+        BLUE_TG_ARN: ${{ inputs.blue-target-group-arn }}
+        GREEN_TG_ARN: ${{ inputs.green-target-group-arn }}
+      run: |
+        chmod +x scripts/deploy.sh
+        ./scripts/deploy.sh \
+          "${{ inputs.aws-region }}" \
+          "${{ inputs.cluster }}" \
+          "${{ inputs.service }}" \
+          "${{ inputs.image }}" \
+          "${{ inputs.container-name }}" \
+          "${{ inputs.listener-arn }}" \
+          "${{ inputs.shift-steps }}" \
+          "${{ inputs.shift-interval-seconds }}"
