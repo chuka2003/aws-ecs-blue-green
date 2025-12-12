@@ -1,8 +1,8 @@
-# ecs-blue-green-deploy
+# aws-ecs-blue-green-deploy
 
-![CI](https://github.com/chuka2003/ecs-blue-green-deploy/actions/workflows/ci.yml/badge.svg)
-![GitHub release](https://img.shields.io/github/v/release/chuka2003/ecs-blue-green-deploy)
-![License](https://img.shields.io/github/license/chuka2003/ecs-blue-green-deploy)
+![CI](https://github.com/chuka2003/aws-ecs-blue-green/actions/workflows/ci.yml/badge.svg)
+![GitHub release](https://img.shields.io/github/v/release/chuka2003/aws-ecs-blue-green)
+![License](https://img.shields.io/github/license/chuka2003/aws-ecs-blue-green)
 ![GitHub Marketplace](https://img.shields.io/badge/Marketplace-ecs--blue--green--deploy-blue?logo=github)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-success)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Blue-Green Deploy
-        uses: chuka2003/ecs-blue-green-deploy@v1
+        uses: chuka2003/aws-ecs-blue-green@v1
         with:
           aws-region: us-east-1
           aws-role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy-role
@@ -187,7 +187,7 @@ aws-ecs-blue-green/
 
 #### Added
 
-* Initial release of `ecs-blue-green-deploy`.
+* Initial release of `aws-ecs-blue-green`.
 * ECS task definition update (with optional image override).
 * ECS service deployment + stabilization wait.
 * ALB weighted traffic shifting between BLUE and GREEN target groups.
